@@ -4,8 +4,10 @@ import java.io.*;
 import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
+import java.util.zip.ZipOutputStream;
 
 public class PandaZip {
     static List<String> targetFileExtList = Arrays.asList(".pdf", ".txt");
@@ -13,12 +15,57 @@ public class PandaZip {
     static boolean needPrefix = false;
 
     public static void main(String[] args) throws Exception {
-        String source = "C:\\Users\\liujian\\Desktop\\zip\\source\\刘建资料.zip";
-        String dest = "C:\\Users\\liujian\\Desktop\\zip\\dest";
-        unzip(dest, source);
+
     }
 
-    private static void unzip(String dest, String source) throws IOException {
+    /**
+     * zip文件夹
+     *
+     * @param source zip源文件夹
+     * @param dest   zip目标文件
+     * @throws Exception 异常
+     */
+    public static void zip(String source, String dest) throws Exception {
+        File sourceFile = new File(source);
+        ZipOutputStream zipOutputStream = new ZipOutputStream(new FileOutputStream(dest));
+        dfs(zipOutputStream, sourceFile, sourceFile.getName());
+    }
+
+    /**
+     * 递归遍历文件夹
+     *
+     * @param zipOutputStream zip输出流
+     * @param files           当前文件
+     * @param parentPath      父目录
+     * @throws Exception 异常
+     */
+    private static void dfs(ZipOutputStream zipOutputStream, File files, String parentPath) throws Exception {
+        for (File file : Objects.requireNonNull(files.listFiles())) {
+            if (file.isDirectory()) {
+                dfs(zipOutputStream, file, parentPath + "/" + file.getName());
+            } else {
+                System.out.println(file.getAbsolutePath());
+                ZipEntry entry = new ZipEntry(parentPath + "/" + file.getName());
+                zipOutputStream.putNextEntry(entry);
+                FileInputStream fis = new FileInputStream(file);
+                byte[] buffer = new byte[4096];
+                int len = 0;
+                while ((len = fis.read(buffer)) != -1) {
+                    zipOutputStream.write(buffer, 0, len);
+                }
+                fis.close();
+            }
+        }
+    }
+
+    /**
+     * 解压zip
+     *
+     * @param source 解压源文件
+     * @param dest   压价目标路径
+     * @throws Exception 异常
+     */
+    public static void unzip(String source, String dest) throws Exception {
         File file = new File(dest);
         //创建输出根目录
         if (!file.exists()) {
